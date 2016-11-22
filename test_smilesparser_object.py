@@ -1,5 +1,11 @@
 import smilesparser
 
+serial = 0
+atomdb = {}
+last_atom = None
+def inspect_organic_symbol(organic_symbol, indent=0):
+  print "  " * indent + "Organic symbol:", ''.join(organic_symbol)
+
 def inspect_aromatic_symbol(aromatic_symbol, indent=0):
   print "  " * indent + "Aromatic symbol:", ''.join(aromatic_symbol)
 
@@ -32,19 +38,34 @@ def inspect_atomspec(atomspec, indent=0):
       print "  " * indent + str(item), dir(item)
 
 def inspect_atom(atom, indent=0):
-  if isinstance(atom, smilesparser.AST.OrganicSymbol) or \
-     isinstance(atom, smilesparser.AST.AromaticSymbol):
-    print "  " * indent + "Atom:", atom
+  global last_atom
+  last_atom = atom
+  if isinstance(atom, smilesparser.AST.OrganicSymbol):
+    inspect_organic_symbol(atom.organic_symbol)
+  elif isinstance(atom, smilesparser.AST.AromaticSymbol):
+    inspect_aromatic_symbol(atom.aromatic_symbol)
   elif isinstance(atom, smilesparser.AST.AtomSpec):
     inspect_atomspec(atom.atom_spec)
   else:
     print "  " * indent + atom, dir(atom)
+  global serial
+  atomdb[atom] = serial
+  serial += 1
 
 def inspect_bond(bond, indent=0):
   print "  " * indent + "Bond:", bond
 
+ring_closures = {}
+
 def inspect_ring_closure(ring_closure, indent=0):
   print "  " * indent + "Ring Closure:", ring_closure
+  global last_atom
+  if ring_closure not in ring_closures:
+    ring_closures[ring_closure] = last_atom
+  else:
+    first = ring_closures[ring_closure]
+    second = last_atom
+    print "bond between:", atomdb[first], "and", atomdb[second]
 
 def inspect_chain(chain, indent=0):
   # print "  " * indent + "Chain"
@@ -87,15 +108,16 @@ smiles=[
     # 'CC(=NO)C(C)=NO',
     # 'c1ccccc1',
     #'CCC[S@](=O)c1ccc2c(c1)[nH]/c(=N/C(=O)OC)/[nH]2',
-    'CCC(=O)O[C@]1(CC[NH+](C[C@@H]1CC=C)C)c2ccccc2',
-    'C[C@@H](c1ccc(cc1)NCC(=C)C)C(=O)[O-]',
-    'C[C@H](Cc1ccccc1)[NH2+][C@@H](C#N)c2ccccc2',
-    'C[C@@H](CC(c1ccccc1)(c2ccccc2)C(=O)N)[NH+](C)C',
-    'Cc1c(c(=O)n(n1C)c2ccccc2)NC(=O)[C@H](C)[NH+](C)C',
-    'c1ccc(cc1)[C@@H](C(=O)[O-])O',
-    'CC[C@](C)(C[NH+](C)C)OC(=O)c1ccccc1'
-    'COc1cc(c(c2c1OCO2)OC)CC=C',
-    'Cc1ccccc1NC(=O)[C@H](C)[NH+]2CCCC2',
+    # 'CCC(=O)O[C@]1(CC[NH+](C[C@@H]1CC=C)C)c2ccccc2',
+    # 'C[C@@H](c1ccc(cc1)NCC(=C)C)C(=O)[O-]',
+    # 'C[C@H](Cc1ccccc1)[NH2+][C@@H](C#N)c2ccccc2',
+    # 'C[C@@H](CC(c1ccccc1)(c2ccccc2)C(=O)N)[NH+](C)C',
+    # 'Cc1c(c(=O)n(n1C)c2ccccc2)NC(=O)[C@H](C)[NH+](C)C',
+    # 'c1ccc(cc1)[C@@H](C(=O)[O-])O',
+    # 'CC[C@](C)(C[NH+](C)C)OC(=O)c1ccccc1'
+    # 'COc1cc(c(c2c1OCO2)OC)CC=C',
+    # 'Cc1ccccc1NC(=O)[C@H](C)[NH+]2CCCC2',
+    "CC(C)CCNC(=O)c1cc(n(n1)c2ccc(cc2)F)c3cccnc3",
 ]
 for s in smiles:
   print s
