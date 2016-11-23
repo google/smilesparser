@@ -212,6 +212,11 @@ def class_fn(s,l,t):
 def isotope_fn(s,l,t):
   return AST.Isotope(t[0])
 
+LBRACKET = pp.Suppress('[')
+RBRACKET = pp.Suppress(']')
+LPAREN = pp.Suppress('(')
+RPAREN = pp.Suppress(')')
+
 # Forward references for parsed elements
 Atom = pp.Forward()
 Chain = pp.Forward()
@@ -239,7 +244,7 @@ Chain <<= pp.Group(pp.Optional(Bond) + pp.Or([Atom, RingClosure]))
 Chain.setParseAction(chain_fn)
 
 # Parses a branch off a SMILES string like (C)
-Branch <<= pp.Literal('(').suppress() + pp.Group(pp.Optional(Bond) + pp.OneOrMore(SMILES)) + pp.Literal(')').suppress()
+Branch <<= LPAREN + pp.Group(pp.Optional(Bond) + pp.OneOrMore(SMILES)) + RPAREN
 Branch.setParseAction(branch_fn)
 
 # Parses an atom like C
@@ -251,8 +256,8 @@ Bond <<= pp.Or(map(pp.Literal, ['-', '=', '#', '$', ':', '/', '\\', '.']))
 Bond.setParseAction(bond_fn)
 
 # Parses an organic symbol like Br or C
-OrganicSymbol <<= (pp.Group(pp.Literal('B') + pp.Optional(pp.Literal('r'))) | \
-                   pp.Group(pp.Literal('C') + pp.Optional(pp.Literal('l'))) | \
+OrganicSymbol <<= (pp.Group(pp.Literal('Br')) | \
+                   pp.Group(pp.Literal('Cl')) | \
                    pp.Literal('C') | \
                    pp.Literal('N') | \
                    pp.Literal('O') | \
@@ -267,7 +272,7 @@ AromaticSymbol <<= pp.Or(map(pp.Literal, ['b', 'c', 'n', 'o', 'p', 's']))
 AromaticSymbol.setParseAction(aromatic_symbol_fn)
 
 # Parses an atom specification like [Br+]
-AtomSpec <<= pp.Literal('[').suppress() + \
+AtomSpec <<= LBRACKET + \
   pp.Group( \
     pp.Optional(Isotope) + \
     pp.Or([pp.Literal('se'), pp.Literal('as'), AromaticSymbol, ElementSymbol, WILDCARD]) + \
@@ -275,7 +280,7 @@ AtomSpec <<= pp.Literal('[').suppress() + \
     pp.Optional(HCount) + \
     pp.Optional(Charge) + \
     pp.Optional(Class)) + \
-  pp.Literal(']').suppress()
+  RBRACKET
 AtomSpec.setParseAction(atom_spec_fn)
 
 WILDCARD <<= '*'
